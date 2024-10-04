@@ -1,0 +1,14 @@
+_format_version: "3.0"
+
+services:
+  - name: "httpbin-service"
+    host: "httpbin.org"
+    path: /anything
+    port: 80
+    protocol: http
+    routes:
+      - name: "httpbin-route"
+        methods:
+          - "GET"
+        paths:
+          - "/anything"

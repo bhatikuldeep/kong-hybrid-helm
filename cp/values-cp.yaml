@@ -1,0 +1,96 @@
+# Do not use Kong Ingress Controller
+ingressController:
+  enabled: false
+
+image:
+  repository: "{{ .Values.image.repository }}"
+  tag: "{{ .Values.image.tag }}"
+
+# Mount the secret created earlier
+secretVolumes:
+  - kong-cluster-cert
+
+env:
+  # This is a control_plane node
+  role: control_plane
+  # These certificates are used for control plane / data plane communication
+  cluster_cert: /etc/secrets/kong-cluster-cert/tls.crt
+  cluster_cert_key: /etc/secrets/kong-cluster-cert/tls.key
+
+  # Database
+  # CHANGE THESE VALUES
+  database: postgres
+  pg_database: kong
+  pg_user: kong
+  pg_password: demo123
+  pg_host: kong-cp-postgresql.kong.svc.cluster.local
+  pg_ssl: "on"
+
+  # Kong manager
+  admin_gui_url: http://127.0.0.1:8002  
+  admin_gui_api_url: http://127.0.0.1:8001
+  # Change the secret and set cookie_secure to true if using a HTTPS endpoint
+  admin_gui_session_conf: '{"secret":"secret","storage":"kong","cookie_secure":false}'
+
+  # Kong Manager password
+  password: password
+
+# Enterprise functionality
+enterprise:
+  enabled: true
+  license_secret: kong-enterprise-license
+  rbac:
+     enabled: true
+     admin_gui_auth: basic-auth
+
+# The control plane serves the Admin API
+admin:
+  enabled: true
+  type: LoadBalancer
+  http:
+    enabled: true
+    servicePort: 8001
+    containerPort: 8001
+  tls:
+    enabled: false
+    servicePort: 8444
+    containerPort: 8444
+    parameters: []
+
+# Clustering endpoints are required in hybrid mode
+cluster:
+  enabled: true
+  tls:
+    enabled: true
+
+clustertelemetry:
+  enabled: true
+  tls:
+    enabled: true
+
+# Kong manager configuration settings
+manager:
+  enabled: true
+  type: LoadBalancer
+  http:
+    enabled: true
+    servicePort: 8002
+    containerPort: 8002
+  tls:
+    enabled: falsedec
+    containerPort: 8445
+    servicePort: 8445
+    parameters: []  
+
+# These roles will be served by different Helm releases
+proxy:
+  enabled: false
+
+# This is for testing purposes only
+# DO NOT DO THIS IN PRODUCTION
+# Your cluster needs a way to create PersistentVolumeClaims
+# if this option is enabled
+postgresql:
+  enabled: true
+  auth:
+    password: demo123
